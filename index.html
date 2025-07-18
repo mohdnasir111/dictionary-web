@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Dictionary Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .search-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 300px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      margin-left: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    #result {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      min-height: 100px;
+    }
+    .error {
+      color: red;
+      text-align: center;
+    }
+    .definition {
+      margin: 10px 0;
+    }
+    .definition h3 {
+      margin: 0;
+      color: #28a745;
+    }
+    .phonetic {
+      color: #555;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>Free Dictionary Search</h1>
+  <div class="search-container">
+    <input type="text" id="wordInput" placeholder="Enter a word" />
+    <button onclick="searchWord()">Search</button>
+  </div>
+  <div id="result"></div>
+
+  <script>
+    async function searchWord() {
+      const wordInput = document.getElementById('wordInput').value.trim();
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '';
+
+      if (!wordInput) {
+        resultDiv.innerHTML = '<p class="error">Please enter a word.</p>';
+        return;
+      }
+
+      const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${wordInput}`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Word not found or API error');
+        }
+        const data = await response.json();
+
+        if (!data || data.title === 'No Definitions Found') {
+          resultDiv.innerHTML = '<p class="error">Word not found. Try another word.</p>';
+          return;
+        }
+
+        const wordData = data[0];
+        let output = `<h2>${wordData.word}</h2>`;
+        if (wordData.phonetic) {
+          output += `<p class="phonetic"><strong>Pronunciation:</strong> ${wordData.phonetic}</p>`;
+        }
+
+        wordData.meanings.forEach((meaning, index) => {
+          output += `<div class="definition"><h3>${meaning.partOfSpeech}</h3>`;
+          meaning.definitions.forEach((def, defIndex) => {
+            output += `<p>${defIndex + 1}. ${def.definition}</p>`;
+            if (def.example) {
+              output += `<p><em>Example:</em> ${def.example}</p>`;
+            }
+          });
+          output += '</div>';
+        });
+
+        resultDiv.innerHTML = output;
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="error">Error fetching data: ${error.message}. Please try again later.</p>`;
+      }
+    }
+
+    // Allow pressing Enter to search
+    document.getElementById('wordInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        searchWord();
+      }
+    });
+  </script>
+</body>
+</html>
